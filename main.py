@@ -1,4 +1,5 @@
 # hotkey_demo.py
+import random
 import keyboard
 import time
 import pyperclip
@@ -9,11 +10,37 @@ import win32gui
 import win32process
 import psutil
 from typing import Optional, Tuple
-from config import DELAY, FONT_FILE,BASEIMAGE_MAPPING,BASEIMAGE_FILE, AUTO_SEND_IMAGE, AUTO_PASTE_IMAGE, BLOCK_HOTKEY, HOTKEY, SEND_HOTKEY,PASTE_HOTKEY,CUT_HOTKEY,SELECT_ALL_HOTKEY,TEXT_BOX_TOPLEFT,IMAGE_BOX_BOTTOMRIGHT,BASE_OVERLAY_FILE,USE_BASE_OVERLAY, ALLOWED_PROCESSES
+from config import DELAY, FONT_FILE,EMOTION_MAPPING,BASEIMAGE1_MAPPING,BASEIMAGE1_FILE, BASEIMAGE2_MAPPING,BASEIMAGE2_FILE,AUTO_SEND_IMAGE, AUTO_PASTE_IMAGE, BLOCK_HOTKEY, HOTKEY, SEND_HOTKEY,PASTE_HOTKEY,CUT_HOTKEY,SELECT_ALL_HOTKEY,TEXT_BOX_TOPLEFT,IMAGE_BOX_BOTTOMRIGHT,BASE_OVERLAY_FILE,USE_BASE_OVERLAY, ALLOWED_PROCESSES
 
 from text_fit_draw import draw_text_auto
 from image_fit_paste import paste_image_auto
-current_image_file = BASEIMAGE_FILE
+
+
+def get_random_anan_image() -> str:
+    """
+    随机选取差分包
+    """
+    selectImage = [BASEIMAGE1_FILE,BASEIMAGE2_FILE]
+    return random.choice(selectImage)
+
+def match_anan_image(anan_image):
+    """
+    根据随机选取的安安匹配对应的表情差分包
+    """
+    return EMOTION_MAPPING.get(anan_image, [])
+
+def remove_keyword(text):
+    """
+    使用正则表达式删除开头的#关键词#
+    """
+    # 检查字符串是否以#开头且包含第二个#
+    if text.startswith('#') and '#' in text[1:]:
+        second_index = text.find('#', 1)  # 从位置1开始找第二个#
+        if second_index != -1:
+            # 返回第二个#之后的内容
+            return text[second_index + 1:]
+    return text
+
 
 def get_foreground_window_process_name():
     """
@@ -91,7 +118,9 @@ def try_get_image() -> Optional[Image.Image]:
     return None
 
 def Start():
-    global  current_image_file#保存上次使用差分
+    current_image_file = get_random_anan_image()#随机选取差分包
+    current_emo_file = match_anan_image(current_image_file)#根据差分包匹配表情拆分包
+
     # 检查是否设置了允许的进程列表，如果设置了，则检查当前进程是否在允许列表中
     if ALLOWED_PROCESSES:
         current_process = get_foreground_window_process_name()
@@ -137,12 +166,15 @@ def Start():
         print("Get text: "+text)
         
      # 查找发送内容是否包含更换差分指令#差分名#，如果有则更换差分并移除关键字
-        for keyword, img_file in BASEIMAGE_MAPPING.items():
+        for keyword, img_file in current_emo_file.items():
             if keyword in text:
                 current_image_file = img_file
-                text = text.replace(keyword, "").strip()
+                #text = text.replace(keyword, "").strip()
                 print(f"检测到关键词 '{keyword}'，使用底图: {current_image_file}")
                 break
+        
+        text = remove_keyword(text)#改为默认去除关键词，以免随机到无此关键词的差分
+
         try:
             png_bytes = draw_text_auto(
                 image_source=current_image_file,
