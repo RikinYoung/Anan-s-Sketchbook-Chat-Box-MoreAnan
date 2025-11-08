@@ -1,6 +1,6 @@
 # 安安的素描本聊天框
 
-本项目fork自https://github.com/MarkCup-Official/Anan-s-Sketchbook-Chat-Box，请支持原作者大佬
+本项目fork自https://github.com/MarkCup-Official/Anan-s-Sketchbook-Chat-Box  请支持原作者大佬
 
 本项目只做了略微改动，低技术力轻喷
 
